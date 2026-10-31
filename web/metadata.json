@@ -1,0 +1,6 @@
+{
+  "name": "Kabisado - AI Study & Reviewer App",
+  "description": "Calm, focused AI study companion for Filipino high school and college students, converting notes into flashcards, quizzes, and auto-graded problem sets with spaced repetition.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
