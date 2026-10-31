@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-evergreen: #1A281F;
+    --color-taupe-grey: #635255;
+    --color-frozen-water: #C7EAE4;
+    --color-light-blue: #B8D3D1;
+    --color-celadon: #A7E8BD;
+    --color-powder-blush: #FCBCB8;
+    --color-powder-blush-deep: #EFA7A7;
+    --color-old-rose: #CE7B91;
+    --color-jasmine: #FFD972;
+    --color-pale-sky: #C0E8F9;
+    --color-page-bg: #F3FAF8;
+    --color-surface-white: #FFFFFF;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1A281F;
+    background-color: #F3FAF8;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, .font-heading, .big-num {
+    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  code, pre, .font-code {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+/* Custom subtle scrollbars fitting the tidy desk aesthetic */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F3FAF8;
+}
+::-webkit-scrollbar-thumb {
+  background: #B8D3D1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #635255;
+}

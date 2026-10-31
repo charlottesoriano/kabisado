@@ -1,0 +1,56 @@
+# --- OS / editors ---
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# --- Env files (never commit secrets) ---
+.env
+.env.*
+!.env.example
+
+# --- Node / pnpm / Turborepo ---
+node_modules/
+.pnpm-store/
+.turbo/
+npm-debug.log*
+pnpm-debug.log*
+coverage/
+
+# --- Next.js (apps/web) ---
+.next/
+out/
+.vercel/
+next-env.d.ts
+
+# --- Expo / React Native (apps/mobile) ---
+.expo/
+dist/
+web-build/
+ios/
+android/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# --- Python (backend) ---
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Local data / caches ---
+backend/.fastembed_cache/
+supabase/.temp/
+*.log
+
+# --- Testing ---
+playwright-report/
+test-results/
