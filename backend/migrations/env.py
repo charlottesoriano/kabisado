@@ -2,6 +2,7 @@
 
 import asyncio
 from logging.config import fileConfig
+from typing import Any
 
 from alembic import context
 from sqlalchemy.engine import Connection
@@ -25,16 +26,27 @@ def _url() -> str:
     return url
 
 
+def _include_name(name: str | None, type_: str, parent_names: Any) -> bool:
+    """Only compare schema ``app``; Supabase's own schemas (public, auth, storage...) and the
+    job queue's tables are not managed here."""
+    if type_ == "schema":
+        return name == SCHEMA
+    return True
+
+
 def run_migrations_offline() -> None:
     context.configure(
         url=_url(),
         target_metadata=target_metadata,
         literal_binds=True,
         include_schemas=True,
+        include_name=_include_name,
         version_table_schema=SCHEMA,
         dialect_opts={"paramstyle": "named"},
     )
     with context.begin_transaction():
+        # The version table lives in ``app``, so the schema must exist before it is created.
+        context.execute(f"create schema if not exists {SCHEMA}")
         context.run_migrations()
 
 
@@ -43,6 +55,7 @@ def _do_run_migrations(connection: Connection) -> None:
         connection=connection,
         target_metadata=target_metadata,
         include_schemas=True,
+        include_name=_include_name,
         version_table_schema=SCHEMA,
     )
     with context.begin_transaction():

@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     # Postgres (Supabase session pooler)
     database_url: str = ""
     worker_database_url: str = ""
+    db_pool_size: int = 5
+    db_max_overflow: int = 5
 
     # Supabase Storage (backend only)
     supabase_url: str = ""
