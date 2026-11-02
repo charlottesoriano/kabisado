@@ -4,7 +4,8 @@ FastAPI API + Procrastinate worker. Specs live in `../MDs/` (03-backend.md is th
 
 ```
 uv sync                                   # install deps (Python 3.12, uv-managed)
-uv run uvicorn app.main:app --reload      # API on http://127.0.0.1:8000 (/health, /docs)
+uv run uvicorn app.main:app --reload --loop asyncio:SelectorEventLoop   # API on http://127.0.0.1:8000 (/health, /docs)
+# --loop: on Windows uvicorn defaults to the Proactor loop, which psycopg (job enqueue) can't use
 uv run pytest                             # tests
 uv run ruff check . && uv run mypy app    # lint / type-check
 uv run alembic upgrade head               # migrations (needs DATABASE_URL)
@@ -49,3 +50,24 @@ TEST_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/postgres uv run 
 ```
 
 In PowerShell set it first: `$env:TEST_DATABASE_URL = "postgresql://..."`.
+
+## API (build step 3a: account, documents, cards)
+
+```
+uv run python -m app.export_openapi              # regenerate openapi.json (a test fails if stale)
+uv run python -m app.services.storage --ensure-bucket
+                                                 # create/update the private `uploads` bucket
+                                                 # (PDF only, MAX_UPLOAD_MB) with the service key
+```
+
+- **Errors** always look like `{"error": {"code", "message", "details"?, "request_id", "debug"?}}`.
+  The code table and the translation rules are in `app/errors.py`. `request_id` equals the
+  `X-Request-ID` response header and the `request_id` field of the JSON log lines. `debug`
+  (exception type and message) appears only when `APP_ENV` is not `production`, which is the
+  default, so set `APP_ENV=local` in your `.env` for development only.
+- **Job queue:** Procrastinate's tables live in the private `procrastinate` schema (migration
+  `0002`, SQL vendored in `migrations/sql/`). Upgrading Procrastinate needs a new migration that
+  applies its bundled migrations. Worker: `uv run procrastinate --app=app.jobs.app.app worker`.
+- **Tests:** API tests use a real database (`TEST_DATABASE_URL`), fake Storage and job queue
+  (`tests/fakes.py`), test-signed Clerk tokens (`tests/conftest.py::token_for`) and a mocked
+  JWKS. The developer `.env` is never read by tests.

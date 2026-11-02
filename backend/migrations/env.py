@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 import app.db.models  # noqa: F401  (registers models on Base.metadata)
 from app.config import get_settings
 from app.db.base import SCHEMA, Base
+from app.db.session import asyncpg_url
 
 config = context.config
 if config.config_file_name is not None:
@@ -23,7 +24,7 @@ def _url() -> str:
     url = get_settings().database_url
     if not url:
         raise RuntimeError("DATABASE_URL is not set")
-    return url
+    return asyncpg_url(url)
 
 
 def _include_name(name: str | None, type_: str, parent_names: Any) -> bool:

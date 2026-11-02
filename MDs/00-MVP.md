@@ -31,7 +31,7 @@ One monorepo holds a Python (FastAPI) backend, a Next.js web app and an Expo mob
 | Background jobs | Procrastinate (Postgres-backed queue) | Generation for a long PDF outlasts a request; no Redis needed |
 | Auth | Clerk (`@clerk/nextjs`, `@clerk/clerk-expo`); backend verifies the session JWT | Prebuilt sign-in; webhooks sync user profiles |
 | Database | Supabase Postgres + pgvector (384 dimensions) | Relational data and embeddings in one place |
-| File storage | Supabase Storage, private `uploads` bucket | Backend issues 10-minute signed upload URLs |
+| File storage | Supabase Storage, private `uploads` bucket | Backend issues signed upload URLs (2-hour lifetime, fixed by Supabase) and 10-minute signed download URLs |
 | PDF extraction | PyMuPDF | Text and page numbers from text-based PDFs |
 | LLM gateway | LiteLLM | One interface; falls back to the next free provider on rate limits |
 | LLM providers (free) | Groq and Cerebras (Llama 3.3 70B), Gemini Flash, OpenRouter free models; Ollama locally | Generation, verification on a different provider, explanations |

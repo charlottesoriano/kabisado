@@ -27,6 +27,10 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
+    # Runtime environment. Anything other than "production" counts as local/dev and adds a
+    # ``debug`` object to error responses (exception type and message). Default is the safe one.
+    app_env: Literal["local", "development", "test", "production"] = "production"
+
     # Postgres (Supabase session pooler)
     database_url: str = ""
     worker_database_url: str = ""
@@ -36,6 +40,9 @@ class Settings(BaseSettings):
     # Supabase Storage (backend only)
     supabase_url: str = ""
     supabase_service_role_key: SecretStr = SecretStr("")
+    storage_bucket: str = "uploads"
+    storage_timeout_seconds: float = 20.0
+    signed_url_ttl_seconds: int = 600  # download URLs; Supabase fixes upload URLs at 2 h
 
     # Clerk
     clerk_secret_key: SecretStr = SecretStr("")
@@ -43,6 +50,10 @@ class Settings(BaseSettings):
     clerk_issuer: str = ""
     clerk_authorized_parties: str = ""
     clerk_webhook_secret: SecretStr = SecretStr("")
+    clerk_clock_skew_seconds: int = 10
+    clerk_jwks_cache_seconds: int = 3600
+    clerk_jwks_min_refetch_seconds: int = 10  # throttle refetches triggered by unknown ``kid``
+    clerk_jwks_timeout_seconds: float = 5.0
 
     # LLM providers
     groq_api_key: SecretStr = SecretStr("")
@@ -66,9 +77,23 @@ class Settings(BaseSettings):
     # Limits
     max_pdf_pages: int = 50
     max_upload_mb: int = 20
+    uploads_per_day: int = 20  # PDF uploads and pasted notes, per user, per local calendar day
+
+    # Rate limits (per user, in-memory fixed windows)
+    rate_limit_default_per_min: int = 120
+    rate_limit_ai_per_min: int = 10
+    rate_limit_ai_per_day: int = 100
 
     # Observability
     sentry_dsn: str = ""
+
+    @property
+    def is_production(self) -> bool:
+        return self.app_env == "production"
+
+    @property
+    def max_upload_bytes(self) -> int:
+        return self.max_upload_mb * 1024 * 1024
 
     @property
     def authorized_parties(self) -> list[str]:

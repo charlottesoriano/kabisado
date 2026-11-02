@@ -35,6 +35,7 @@ SPEC_INDEXES = {
     "attempts_user_doc",
     "attempt_answers_quiz_once",
     "attempt_answers_instance_once",
+    "webhook_events_deleted_user",  # migration 0003 (webhook ordering)
 }
 
 

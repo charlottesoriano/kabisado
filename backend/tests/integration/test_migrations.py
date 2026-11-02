@@ -50,7 +50,7 @@ def engine(migrated: Config) -> Iterator[Engine]:
 
 def test_all_tables_have_rls_and_no_policies(engine: Engine) -> None:
     with engine.connect() as conn:
-        rls = dict(
+        rls: dict[str, bool] = dict(
             conn.execute(
                 text(
                     "select c.relname, c.relrowsecurity from pg_class c "

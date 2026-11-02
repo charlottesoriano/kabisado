@@ -365,7 +365,7 @@ due_at = now + interval days
 - Every query is scoped by user id. Another user's resource returns 404, not 403, so ids can't be probed.
 - Quiz answers and problem answers are never sent before grading.
 - Uploads: PDF only, checked by magic bytes as well as the extension; size and page limits enforced server-side.
-- Signed URLs expire after 10 minutes.
+- Signed upload URLs expire after 2 hours (Supabase fixes this; the response returns the real `expires_at`). Each URL is scoped to one file path, and `/process` re-checks type, size and page count server-side. Signed download URLs expire after 10 minutes (`SIGNED_URL_TTL_SECONDS`).
 - Notes are never put into system prompts, logs or error messages. Logs record document ids and lengths only.
 - CORS allows only the web app's origins.
 

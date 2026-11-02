@@ -5,6 +5,9 @@ Procrastinate uses psycopg 3 (the API itself uses asyncpg). The connection strin
 (``+asyncpg``) is stripped because psycopg expects a plain libpq URL. Nothing connects until the
 app is opened.
 
+Procrastinate's tables live in the private ``procrastinate`` schema (migration 0002), so every
+pooled connection sets ``search_path`` to it when the pool opens it.
+
 Run the worker with::
 
     uv run procrastinate --app=app.jobs.app.app worker
@@ -13,6 +16,7 @@ Run the worker with::
 import asyncio
 import sys
 
+import psycopg
 from procrastinate import App, PsycopgConnector
 
 from app.config import get_settings
@@ -31,12 +35,20 @@ def _libpq_url(url: str) -> str:
     return url
 
 
+PROCRASTINATE_SCHEMA = "procrastinate"
+
+
+async def _use_procrastinate_schema(conn: psycopg.AsyncConnection) -> None:
+    await conn.execute(f"set search_path to {PROCRASTINATE_SCHEMA}")
+    await conn.commit()
+
+
 def _conninfo() -> str:
     settings = get_settings()
     return _libpq_url(settings.worker_database_url or settings.database_url)
 
 
 app = App(
-    connector=PsycopgConnector(conninfo=_conninfo()),
+    connector=PsycopgConnector(conninfo=_conninfo(), configure=_use_procrastinate_schema),
     import_paths=["app.jobs.generate_document"],
 )

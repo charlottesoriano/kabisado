@@ -8,7 +8,7 @@ No ``relationship()``s on purpose: every query is written explicitly and scoped 
 id (directly or through ``documents.user_id``).
 """
 
-from datetime import datetime, time
+from datetime import date, datetime, time
 from decimal import Decimal
 from typing import Any, Literal, get_args
 from uuid import UUID
@@ -18,6 +18,7 @@ from sqlalchemy import (
     ARRAY,
     Boolean,
     CheckConstraint,
+    Date,
     DateTime,
     ForeignKey,
     Index,
@@ -83,6 +84,7 @@ def _updated_at() -> Mapped[datetime]:
 # Profiles ---------------------------------------------------------------------------------------
 class Profile(Base):
     __tablename__ = "profiles"
+    __table_args__ = (CheckConstraint("uploads_count >= 0", name="uploads_count"),)
 
     id: Mapped[str] = mapped_column(Text, primary_key=True)  # Clerk user id (token `sub`)
     email: Mapped[str | None] = mapped_column(Text)
@@ -91,6 +93,10 @@ class Profile(Base):
     reminder_time: Mapped[time | None] = mapped_column(Time)
     created_at: Mapped[datetime] = _created_at()
     updated_at: Mapped[datetime] = _updated_at()
+    # Daily upload limit (migration 0003): the user's local day and uploads made on it.
+    # Never decremented, so deleting a deck doesn't free a slot.
+    uploads_day: Mapped[date | None] = mapped_column(Date)
+    uploads_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
 
 
 # Documents (decks) ------------------------------------------------------------------------------
@@ -368,11 +374,20 @@ class GenerationRun(Base):
 class WebhookEvent(Base):
     __tablename__ = "webhook_events"
 
+    __table_args__ = (
+        Index(
+            "webhook_events_deleted_user",
+            "user_id",
+            postgresql_where=text("event_type = 'user.deleted'"),
+        ),
+    )
+
     svix_id: Mapped[str] = mapped_column(Text, primary_key=True)
     event_type: Mapped[str] = mapped_column(Text, nullable=False)
     received_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+    user_id: Mapped[str | None] = mapped_column(Text)  # Clerk user the event is about (0003)
 
 
 # Indexes with descending columns (need the mapped columns, so declared after the classes).

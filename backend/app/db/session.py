@@ -8,7 +8,9 @@ The engine is created lazily on first use, so the app and the tests start withou
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import Annotated
 
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -22,6 +24,15 @@ _engine: AsyncEngine | None = None
 _sessionmaker: async_sessionmaker[AsyncSession] | None = None
 
 
+def asyncpg_url(url: str) -> str:
+    """Force the asyncpg driver: a plain ``postgresql://`` URL would make SQLAlchemy 2.1 pick
+    psycopg, whose async mode fails on the Windows Proactor loop."""
+    for prefix in ("postgresql+psycopg://", "postgresql://", "postgres://"):
+        if url.startswith(prefix):
+            return "postgresql+asyncpg://" + url[len(prefix) :]
+    return url
+
+
 def get_engine() -> AsyncEngine:
     global _engine
     if _engine is None:
@@ -29,10 +40,11 @@ def get_engine() -> AsyncEngine:
         if not settings.database_url:
             raise RuntimeError("DATABASE_URL is not set")
         _engine = create_async_engine(
-            settings.database_url,
+            asyncpg_url(settings.database_url),
             pool_size=settings.db_pool_size,
             max_overflow=settings.db_max_overflow,
             pool_pre_ping=True,
+            hide_parameters=True,  # SQL errors must never echo note text into logs
         )
     return _engine
 
@@ -64,3 +76,6 @@ async def dispose_engine() -> None:
         await _engine.dispose()
     _engine = None
     _sessionmaker = None
+
+
+SessionDep = Annotated[AsyncSession, Depends(get_session)]

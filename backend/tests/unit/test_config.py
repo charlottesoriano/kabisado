@@ -7,7 +7,7 @@ from app.jobs.app import _libpq_url
 @pytest.mark.unit
 def test_csv_fields_split_and_trim() -> None:
     s = Settings(
-        _env_file=None,  # type: ignore[call-arg]
+        _env_file=None,
         clerk_authorized_parties="https://a.example, http://localhost:3000 ,",
         llm_bulk_models="groq/x,cerebras/y",
     )
@@ -18,7 +18,7 @@ def test_csv_fields_split_and_trim() -> None:
 
 @pytest.mark.unit
 def test_defaults_without_env() -> None:
-    s = Settings(_env_file=None)  # type: ignore[call-arg]
+    s = Settings(_env_file=None)
     assert s.max_pdf_pages == 50
     assert s.max_upload_mb == 20
     assert s.code_runner == "judge0"

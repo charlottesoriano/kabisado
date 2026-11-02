@@ -50,7 +50,7 @@ Test cases for the FastAPI backend, the job worker and the database. IDs referen
 
 | ID | Type | Scenario | Input / steps | Expected | Pri |
 | --- | --- | --- | --- | --- | --- |
-| BE-DOC-01 | api | Create PDF document | `POST /documents` title, `notes.pdf`, 2 MB | 201; status `queued`; signed URL with ~10 min expiry; path `{user}/{doc}.pdf` | P0 |
+| BE-DOC-01 | api | Create PDF document | `POST /documents` title, `notes.pdf`, 2 MB | 201; status `queued`; signed upload URL with `expires_at` ~2 h ahead; path `{user}/{doc}.pdf` | P0 |
 | BE-DOC-02 | api | File too large | size 21 MB | 422 `file_too_large` | P0 |
 | BE-DOC-03 | api | Wrong extension | `notes.docx` | 422 `invalid_file` | P0 |
 | BE-DOC-04 | api | Title validation | Empty title; 121-char title | 422 for both | P1 |

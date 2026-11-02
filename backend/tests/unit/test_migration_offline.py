@@ -35,7 +35,11 @@ def _norm(sql: str) -> str:
 def _table_body_lines(sql: str, table: str) -> set[str]:
     match = re.search(rf"CREATE TABLE app\.{table} \((.*?)\n\)", sql, re.S)
     assert match, f"no CREATE TABLE for {table}"
-    return {line.strip().rstrip(",") for line in match.group(1).splitlines() if line.strip()}
+    lines = {line.strip().rstrip(",") for line in match.group(1).splitlines() if line.strip()}
+    # Columns/constraints added by later migrations (ALTER TABLE ... ADD ...).
+    for added in re.findall(rf"ALTER TABLE app\.{table} ADD (?:COLUMN )?(.+?);", sql):
+        lines.add(added.strip())
+    return lines
 
 
 @pytest.fixture
@@ -92,9 +96,23 @@ def test_downgrade_drops_tables_keeps_extensions_and_schema(
     for table in TABLES:
         assert f"drop table app.{table}" in sql
     assert "drop extension" not in sql
-    assert "drop schema" not in sql
+    assert "drop schema app" not in sql
+    assert "drop schema if exists app" not in sql
+    assert "drop schema if exists procrastinate cascade" in sql
     # Dependents are dropped before what they reference.
     assert sql.index("drop table app.attempt_answers") < sql.index(
         "drop table app.problem_instances"
     )
     assert sql.index("drop table app.documents") < sql.index("drop table app.profiles")
+
+
+@pytest.mark.unit
+def test_procrastinate_schema_is_private(upgrade_sql: str) -> None:
+    sql = _norm(upgrade_sql.lower())
+    assert "create schema if not exists procrastinate" in sql
+    assert "set local search_path to procrastinate" in sql
+    assert "create table procrastinate_jobs" in sql
+    assert "reset search_path" in sql
+    assert "alter table procrastinate.%i enable row level security" in sql
+    assert "revoke all on schema procrastinate from %i" in sql
+    assert "revoke all on all functions in schema procrastinate from %i" in sql
