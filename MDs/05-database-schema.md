@@ -53,7 +53,10 @@ create table app.profiles (
   timezone       text not null default 'Asia/Manila',
   reminder_time  time,
   created_at     timestamptz not null default now(),
-  updated_at     timestamptz not null default now()
+  updated_at     timestamptz not null default now(),
+  uploads_day    date,                                   -- user's local day the counter is for
+  uploads_count  int not null default 0                  -- uploads that day; never decremented
+                 constraint ck_profiles_uploads_count check (uploads_count >= 0)
 );
 
 -- Documents (decks) ------------------------------------------------------
@@ -210,7 +213,8 @@ create table app.generation_runs (
 create table app.webhook_events (
   svix_id      text primary key,
   event_type   text not null,
-  received_at  timestamptz not null default now()
+  received_at  timestamptz not null default now(),
+  user_id      text                    -- Clerk user the event is about; a late create/update after user.deleted is ignored
 );
 ```
 
@@ -224,6 +228,7 @@ create index answers_card_time     on app.attempt_answers (card_id, answered_at)
 create index documents_user        on app.documents (user_id, created_at desc);
 create index reviews_user_time     on app.reviews (user_id, reviewed_at);
 create index attempts_user_doc     on app.attempts (user_id, document_id, started_at desc);
+create index webhook_events_deleted_user on app.webhook_events (user_id) where event_type = 'user.deleted';
 
 -- RLS on, no policies: client roles can never read or write.
 alter table app.profiles          enable row level security;
@@ -238,6 +243,7 @@ alter table app.problem_instances enable row level security;
 alter table app.attempt_answers   enable row level security;
 alter table app.generation_runs   enable row level security;
 alter table app.webhook_events    enable row level security;
+alter table app.alembic_version   enable row level security;  -- migration 0004
 
 revoke all on schema app from anon, authenticated;
 revoke all on all tables in schema app from anon, authenticated;

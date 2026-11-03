@@ -65,11 +65,7 @@ def test_client_roles_have_no_schema_or_table_privileges(engine: Engine) -> None
                         {"r": role, "o": t.oid, "p": priv},
                     ).scalar_one():
                         problems.append(f"{role} has {priv} on {t.nspname}.{t.relname}")
-        no_rls = [
-            f"{t.nspname}.{t.relname}"
-            for t in tables
-            if not t.relrowsecurity and t.relname != "alembic_version"
-        ]
+        no_rls = [f"{t.nspname}.{t.relname}" for t in tables if not t.relrowsecurity]
     assert problems == []
     assert no_rls == []
 

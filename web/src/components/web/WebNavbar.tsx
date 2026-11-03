@@ -1,12 +1,13 @@
 import React from 'react';
 import { Logo } from '../common/Logo';
+import { Plus } from 'lucide-react';
+import { Link, usePathname, useRouter } from '../../lib/router';
 import { WebScreen } from '../../types';
-import { Plus, Sparkles, BookOpen } from 'lucide-react';
 
 interface WebNavbarProps {
-  currentScreen: WebScreen;
-  onNavigate: (screen: WebScreen) => void;
-  onNewDeckClick: () => void;
+  currentScreen?: WebScreen;
+  onNavigate?: (screen: WebScreen) => void;
+  onNewDeckClick?: () => void;
 }
 
 export const WebNavbar: React.FC<WebNavbarProps> = ({
@@ -14,6 +15,21 @@ export const WebNavbar: React.FC<WebNavbarProps> = ({
   onNavigate,
   onNewDeckClick,
 }) => {
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const isDashboardActive = pathname === '/dashboard' || pathname === '/' || currentScreen === 'dashboard';
+  const isDecksActive = pathname.startsWith('/decks') || currentScreen === 'deck';
+  const isUploadActive = pathname === '/upload' || currentScreen === 'upload';
+
+  const handleNewDeck = () => {
+    if (onNewDeckClick) {
+      onNewDeckClick();
+    } else {
+      router.push('/upload');
+    }
+  };
+
   return (
     <header
       className="sticky top-[49px] z-40 w-full border-b transition-colors"
@@ -23,56 +39,57 @@ export const WebNavbar: React.FC<WebNavbarProps> = ({
       }}
     >
       <div className="max-w-[1280px] mx-auto px-6 h-16 flex items-center justify-between gap-8">
-        {/* Zone 1: Brand Wordmark */}
-        <div
-          onClick={() => onNavigate('dashboard')}
+        {/* Zone 1: Brand Wordmark (Next.js Link to /dashboard) */}
+        <Link
+          href="/dashboard"
+          onClick={() => onNavigate?.('dashboard')}
           className="cursor-pointer"
         >
           <Logo size="md" showSubtitle subtitle="Reviewer" />
-        </div>
+        </Link>
 
-        {/* Zone 2: Navigation Links (Single line, text with subtle hover) */}
+        {/* Zone 2: Navigation Links using Next.js Link */}
         <nav className="flex items-center gap-7 text-sm font-medium">
-          <button
-            type="button"
-            onClick={() => onNavigate('dashboard')}
+          <Link
+            href="/dashboard"
+            onClick={() => onNavigate?.('dashboard')}
             className={`whitespace-nowrap transition-colors cursor-pointer py-1 border-b-2 ${
-              currentScreen === 'dashboard'
+              isDashboardActive
                 ? 'border-[#1A281F] text-[#1A281F] font-semibold'
                 : 'border-transparent text-[#635255] hover:text-[#1A281F]'
             }`}
           >
             Dashboard
-          </button>
-          <button
-            type="button"
-            onClick={() => onNavigate('deck')}
+          </Link>
+          <Link
+            href="/decks/deck-1"
+            onClick={() => onNavigate?.('deck')}
             className={`whitespace-nowrap transition-colors cursor-pointer py-1 border-b-2 ${
-              currentScreen === 'deck'
+              isDecksActive
                 ? 'border-[#1A281F] text-[#1A281F] font-semibold'
                 : 'border-transparent text-[#635255] hover:text-[#1A281F]'
             }`}
           >
             Decks
-          </button>
-          <button
-            type="button"
-            onClick={() => onNavigate('upload')}
+          </Link>
+          <Link
+            href="/upload"
+            onClick={() => onNavigate?.('upload')}
             className={`whitespace-nowrap transition-colors cursor-pointer py-1 border-b-2 ${
-              currentScreen === 'upload'
+              isUploadActive
                 ? 'border-[#1A281F] text-[#1A281F] font-semibold'
                 : 'border-transparent text-[#635255] hover:text-[#1A281F]'
             }`}
           >
             Upload
-          </button>
+          </Link>
         </nav>
 
         {/* Zone 3: 1 Primary Action + User Avatar */}
         <div className="flex items-center gap-3.5 shrink-0">
           <button
             type="button"
-            onClick={onNewDeckClick}
+            onClick={handleNewDeck}
             className="min-h-[40px] px-4 py-2 rounded-xl text-[14px] font-semibold transition-all cursor-pointer flex items-center gap-2 text-white active:scale-95"
             style={{ backgroundColor: '#1A281F' }}
           >

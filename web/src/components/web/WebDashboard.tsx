@@ -3,6 +3,9 @@ import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { Chip } from '../common/Chip';
 import { DeckItem, WeakTopic } from '../../types';
+import { StudyStreakIndicator } from './StudyStreakIndicator';
+import { StudyLevelProgress } from './StudyLevelProgress';
+import { StudyCalendar } from './StudyCalendar';
 import {
   Clock,
   Flame,
@@ -15,6 +18,7 @@ import {
   CheckCircle2,
   AlertCircle,
   HelpCircle,
+  Calendar as CalendarIcon,
 } from 'lucide-react';
 
 interface WebDashboardProps {
@@ -38,6 +42,8 @@ export const WebDashboard: React.FC<WebDashboardProps> = ({
   onTakeQuiz,
   onNewDeckClick,
 }) => {
+  const [dashboardView, setDashboardView] = React.useState<'decks' | 'calendar'>('decks');
+
   if (isLoadingSkeleton) {
     return (
       <div className="max-w-[1280px] mx-auto px-6 py-8 animate-pulse space-y-8">
@@ -142,74 +148,134 @@ export const WebDashboard: React.FC<WebDashboardProps> = ({
             >
               Take a quiz
             </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => setDashboardView(dashboardView === 'calendar' ? 'decks' : 'calendar')}
+              icon={<CalendarIcon className="w-4 h-4" />}
+            >
+              {dashboardView === 'calendar' ? 'View decks' : 'Study calendar'}
+            </Button>
           </div>
         </div>
       </Card>
 
       {/* 2. Three Stat Tiles */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
         {/* Tile 1: Due Today */}
-        <Card className="p-5 flex items-center gap-4">
-          <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-            style={{ backgroundColor: '#FFD972', color: '#1A281F' }}
-          >
-            <Clock className="w-6 h-6" strokeWidth={2} />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-[#635255]">Due today</p>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="font-heading text-2xl font-bold tracking-tight text-[#1A281F] tabular-nums">
-                24
-              </span>
-              <span className="text-xs text-[#635255]">cards scheduled</span>
+        <Card className="p-5 flex flex-col justify-between">
+          <div className="flex items-center gap-4">
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 select-none"
+              style={{ backgroundColor: '#FFD972', color: '#1A281F' }}
+            >
+              <Clock className="w-6 h-6" strokeWidth={2} />
             </div>
+            <div>
+              <p className="text-xs font-semibold text-[#635255]">Due today</p>
+              <div className="flex items-baseline gap-2 mt-0.5">
+                <span className="font-heading text-2xl font-bold tracking-tight text-[#1A281F] tabular-nums">
+                  24
+                </span>
+                <span className="text-xs text-[#635255]">cards scheduled</span>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 pt-3 border-t border-[#B8D3D1] flex items-center justify-between text-[11px] text-[#635255]">
+            <span>Across 3 active decks</span>
+            <span className="text-[#1A281F] font-semibold">~12 mins review</span>
           </div>
         </Card>
 
         {/* Tile 2: Quiz Accuracy */}
-        <Card className="p-5 flex items-center gap-4">
-          <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-            style={{ backgroundColor: '#A7E8BD', color: '#1A281F' }}
-          >
-            <Award className="w-6 h-6" strokeWidth={2} />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-[#635255]">Quiz accuracy (last 7 days)</p>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="font-heading text-2xl font-bold tracking-tight text-[#1A281F] tabular-nums">
-                86%
-              </span>
-              <span className="text-xs font-semibold text-[#1A281F]">
-                +4% vs last week
-              </span>
+        <Card className="p-5 flex flex-col justify-between">
+          <div className="flex items-center gap-4">
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 select-none"
+              style={{ backgroundColor: '#A7E8BD', color: '#1A281F' }}
+            >
+              <Award className="w-6 h-6" strokeWidth={2} />
             </div>
+            <div>
+              <p className="text-xs font-semibold text-[#635255]">Quiz accuracy (last 7 days)</p>
+              <div className="flex items-baseline gap-2 mt-0.5">
+                <span className="font-heading text-2xl font-bold tracking-tight text-[#1A281F] tabular-nums">
+                  86%
+                </span>
+                <span className="text-xs font-semibold text-[#1A281F]">
+                  +4% vs last week
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 pt-3 border-t border-[#B8D3D1] flex items-center justify-between text-[11px] text-[#635255]">
+            <span>34/40 questions correct</span>
+            <span className="text-[#1A281F] font-semibold">Top 10% in Bio 101</span>
           </div>
         </Card>
 
-        {/* Tile 3: Study Streak */}
-        <Card className="p-5 flex items-center gap-4">
-          <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-            style={{ backgroundColor: '#C7EAE4', color: '#1A281F' }}
-          >
-            <Flame className="w-6 h-6" strokeWidth={2} />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-[#635255]">Study streak</p>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="font-heading text-2xl font-bold tracking-tight text-[#1A281F] tabular-nums">
-                14 days
-              </span>
-              <span className="text-xs text-[#635255]">Keep it up!</span>
-            </div>
-          </div>
-        </Card>
+        {/* Tile 3: Study Streak Indicator Component */}
+        <StudyStreakIndicator
+          consecutiveDays={14}
+          longestStreak={21}
+          reviewedToday={true}
+        />
       </div>
 
-      {/* 3. Main Grid: Deck List (8 cols) + Weakest Topics Side Panel (4 cols) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      {/* 3. Section Navigation: Reviewers & Decks vs Monthly Study Calendar */}
+      <div className="flex items-center justify-between border-b border-[#B8D3D1] pb-2">
+        <div className="flex items-center gap-6">
+          <button
+            type="button"
+            onClick={() => setDashboardView('decks')}
+            className={`pb-2 text-sm font-semibold transition-all cursor-pointer flex items-center gap-2 border-b-2 ${
+              dashboardView === 'decks'
+                ? 'border-[#1A281F] text-[#1A281F]'
+                : 'border-transparent text-[#635255] hover:text-[#1A281F]'
+            }`}
+          >
+            <Layers className="w-4 h-4" strokeWidth={2} />
+            <span>Reviewers &amp; Decks</span>
+            <span
+              className="px-2 py-0.2 rounded-full text-xs font-bold"
+              style={{ backgroundColor: '#C7EAE4', color: '#1A281F' }}
+            >
+              {decks.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setDashboardView('calendar')}
+            className={`pb-2 text-sm font-semibold transition-all cursor-pointer flex items-center gap-2 border-b-2 ${
+              dashboardView === 'calendar'
+                ? 'border-[#1A281F] text-[#1A281F]'
+                : 'border-transparent text-[#635255] hover:text-[#1A281F]'
+            }`}
+          >
+            <CalendarIcon className="w-4 h-4" strokeWidth={2} />
+            <span>Study Calendar</span>
+            <span
+              className="px-2 py-0.2 rounded-full text-xs font-bold"
+              style={{ backgroundColor: '#A7E8BD', color: '#1A281F' }}
+            >
+              Nov 2026
+            </span>
+          </button>
+        </div>
+
+        <span className="text-xs text-[#635255] hidden sm:block">
+          {dashboardView === 'decks'
+            ? 'Active decks, mastery metrics & weakest topics'
+            : 'Color-coded monthly study workload & planned sessions'}
+        </span>
+      </div>
+
+      {dashboardView === 'calendar' ? (
+        <StudyCalendar onStartReviewForDay={() => onStartReview()} />
+      ) : (
+        /* Main Grid: Deck List (8 cols) + Weakest Topics Side Panel (4 cols) */
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Deck List */}
         <div className="lg:col-span-8 space-y-4">
           <div className="flex items-center justify-between">
@@ -345,8 +411,17 @@ export const WebDashboard: React.FC<WebDashboardProps> = ({
           </div>
         </div>
 
-        {/* Right Column: Weakest Topics Side Panel */}
-        <div className="lg:col-span-4">
+        {/* Right Column: Study Level & Weakest Topics Side Panel */}
+        <div className="lg:col-span-4 space-y-6">
+          <StudyLevelProgress
+            currentLevel={7}
+            currentRankTitle="Dean's Lister"
+            currentXp={2450}
+            nextLevelXp={3000}
+            levelStartXp={2000}
+            todayXpGained={180}
+          />
+
           <Card className="p-6 space-y-5">
             <div>
               <div className="flex items-center justify-between">
@@ -405,6 +480,7 @@ export const WebDashboard: React.FC<WebDashboardProps> = ({
           </Card>
         </div>
       </div>
+      )}
     </div>
   );
 };

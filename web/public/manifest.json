@@ -1,0 +1,16 @@
+{
+  "name": "Kabisado - AI Study & Reviewer App",
+  "short_name": "Kabisado",
+  "description": "Calm, focused AI study companion for Filipino high school and college students",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#F3FAF8",
+  "theme_color": "#1A281F",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

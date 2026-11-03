@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PlatformMode, WebScreen, MobileScreen, DeckItem, Flashcard } from './types';
 import {
   MOCK_DECKS,
@@ -9,20 +9,23 @@ import {
   MOCK_CODING_PROBLEM,
 } from './data/mockData';
 
+// Next.js Router & Layout
+import { NextRouterProvider, useRouter, usePathname, useParams } from './lib/router';
+import RootLayout from './app/layout';
+
+// Next.js Page Route Components
+import DashboardPage from './app/dashboard/page';
+import UploadPage from './app/upload/page';
+import DeckDetailPage from './app/decks/[id]/page';
+import ReviewPage from './app/review/[id]/page';
+import QuizPage from './app/quiz/[id]/page';
+import QuizResultsPage from './app/quiz/[id]/results/page';
+import ProblemPracticePage from './app/problems/[id]/page';
+import CodingProblemPage from './app/coding/[id]/page';
+import SignInPage from './app/sign-in/page';
+
 // Common Components
 import { PlatformSwitcher } from './components/common/PlatformSwitcher';
-
-// Web Components
-import { WebNavbar } from './components/web/WebNavbar';
-import { WebSignIn } from './components/web/WebSignIn';
-import { WebDashboard } from './components/web/WebDashboard';
-import { WebUpload } from './components/web/WebUpload';
-import { WebDeckPage } from './components/web/WebDeckPage';
-import { WebFlashcardReview } from './components/web/WebFlashcardReview';
-import { WebQuiz } from './components/web/WebQuiz';
-import { WebQuizResults } from './components/web/WebQuizResults';
-import { WebProblemPractice } from './components/web/WebProblemPractice';
-import { WebCodingProblem } from './components/web/WebCodingProblem';
 
 // Mobile Components
 import { MobileFrame } from './components/mobile/MobileFrame';
@@ -35,33 +38,79 @@ import { MobileQuizAnswered } from './components/mobile/MobileQuizAnswered';
 import { MobileProblemPractice } from './components/mobile/MobileProblemPractice';
 import { MobileTab } from './components/mobile/MobileTabBar';
 
-export default function App() {
-  // Platform & Navigation State
+// Helper to map pathname to WebScreen for PlatformSwitcher dropdown sync
+const getWebScreenFromPath = (path: string): WebScreen => {
+  if (path === '/sign-in') return 'signin';
+  if (path === '/upload') return 'upload';
+  if (path.startsWith('/review/')) return 'flashcard';
+  if (path.endsWith('/results')) return 'quiz-results';
+  if (path.startsWith('/quiz/')) return 'quiz';
+  if (path.startsWith('/problems/')) return 'problem';
+  if (path.startsWith('/coding/')) return 'coding';
+  if (path.startsWith('/decks/')) return 'deck';
+  return 'dashboard';
+};
+
+// Helper to map WebScreen to Next.js route path
+const getRouteFromWebScreen = (screen: WebScreen): string => {
+  switch (screen) {
+    case 'signin':
+      return '/sign-in';
+    case 'dashboard':
+      return '/dashboard';
+    case 'upload':
+      return '/upload';
+    case 'deck':
+      return '/decks/deck-1';
+    case 'flashcard':
+      return '/review/deck-1';
+    case 'quiz':
+      return '/quiz/deck-1';
+    case 'quiz-results':
+      return '/quiz/deck-1/results';
+    case 'problem':
+      return '/problems/prob-101';
+    case 'coding':
+      return '/coding/code-101';
+    default:
+      return '/dashboard';
+  }
+};
+
+function AppContent() {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Platform & Viewport Mode
   const [platform, setPlatform] = useState<PlatformMode>('web');
-  const [webScreen, setWebScreen] = useState<WebScreen>('dashboard');
   const [mobileScreen, setMobileScreen] = useState<MobileScreen>('home');
   const [webViewportWidth, setWebViewportWidth] = useState<'full' | '1280' | '768' | '375'>('1280');
   const [mobileTab, setMobileTab] = useState<MobileTab>('home');
 
   // App Data State
   const [decks, setDecks] = useState<DeckItem[]>(MOCK_DECKS);
-  const [flashcards, setFlashcards] = useState<Flashcard[]>(MOCK_FLASHCARDS);
-  const [selectedDeckId, setSelectedDeckId] = useState<string>('deck-1');
+  const [flashcards] = useState<Flashcard[]>(MOCK_FLASHCARDS);
 
-  // Simulated Special States
+  // Special UI simulation states
   const [isEmptyState, setIsEmptyState] = useState(false);
   const [isFailedUploadState, setIsFailedUploadState] = useState(false);
   const [isLoadingSkeleton, setIsLoadingSkeleton] = useState(false);
   const [isMobileOffline, setIsMobileOffline] = useState(false);
 
-  const currentDeck = decks.find((d) => d.id === selectedDeckId) || decks[0];
+  const currentWebScreen = getWebScreenFromPath(pathname);
 
-  // Handlers for Web transitions
-  const handleWebNewDeck = () => {
-    setWebScreen('upload');
+  const handleWebScreenSelect = (screen: WebScreen) => {
+    const route = getRouteFromWebScreen(screen);
+    router.push(route);
   };
 
-  const handleWebGenerateSuccess = (title: string) => {
+  const handleMobileTabChange = (tab: MobileTab) => {
+    setMobileTab(tab);
+    if (tab === 'home' || tab === 'decks') setMobileScreen('home');
+    if (tab === 'upload') setMobileScreen('home');
+  };
+
+  const handleGenerateSuccess = (title: string) => {
     const newDeck: DeckItem = {
       id: `deck-${Date.now()}`,
       title: title || 'New Reviewer',
@@ -74,42 +123,68 @@ export default function App() {
       status: 'ready',
     };
     setDecks([newDeck, ...decks]);
-    setSelectedDeckId(newDeck.id);
-    setWebScreen('deck');
+    router.push(`/decks/${newDeck.id}`);
   };
 
-  const handleMobileTabChange = (tab: MobileTab) => {
-    setMobileTab(tab);
-    if (tab === 'home') setMobileScreen('home');
-    if (tab === 'decks') setMobileScreen('home');
-    if (tab === 'upload') {
-      // In mobile, switch to front or practice
-      setMobileScreen('home');
+  // Next.js Route Page Matcher following page routing rules
+  const renderNextJsPage = () => {
+    if (pathname === '/sign-in') {
+      return <SignInPage />;
     }
-  };
 
-  // Viewport container width class for Web mode preview
-  const getViewportContainerClass = () => {
-    switch (webViewportWidth) {
-      case '1280':
-        return 'max-w-[1280px] mx-auto border-x shadow-xs';
-      case '768':
-        return 'max-w-[768px] mx-auto border-x shadow-xs';
-      case '375':
-        return 'max-w-[375px] mx-auto border-x shadow-xs';
-      default:
-        return 'w-full';
+    if (pathname === '/upload') {
+      return (
+        <UploadPage
+          isFailedUploadState={isFailedUploadState}
+          onRetryUpload={() => setIsFailedUploadState(false)}
+          onGenerateSuccess={handleGenerateSuccess}
+        />
+      );
     }
+
+    if (pathname.startsWith('/review/')) {
+      return <ReviewPage flashcards={flashcards} />;
+    }
+
+    if (pathname.endsWith('/results')) {
+      return <QuizResultsPage />;
+    }
+
+    if (pathname.startsWith('/quiz/')) {
+      return <QuizPage />;
+    }
+
+    if (pathname.startsWith('/problems/')) {
+      return <ProblemPracticePage />;
+    }
+
+    if (pathname.startsWith('/coding/')) {
+      return <CodingProblemPage />;
+    }
+
+    if (pathname.startsWith('/decks/')) {
+      return <DeckDetailPage decks={decks} flashcards={flashcards} />;
+    }
+
+    // Default to /dashboard
+    return (
+      <DashboardPage
+        decks={decks}
+        weakTopics={MOCK_WEAK_TOPICS}
+        isEmptyState={isEmptyState}
+        isLoadingSkeleton={isLoadingSkeleton}
+      />
+    );
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F3FAF8] text-[#1A281F]">
-      {/* Top Banner / Platform & Screen Switcher */}
+      {/* Top Banner / Platform & Next.js Route Switcher */}
       <PlatformSwitcher
         platform={platform}
         onPlatformChange={setPlatform}
-        webScreen={webScreen}
-        onWebScreenChange={setWebScreen}
+        webScreen={currentWebScreen}
+        onWebScreenChange={handleWebScreenSelect}
         mobileScreen={mobileScreen}
         onMobileScreenChange={setMobileScreen}
         webViewportWidth={webViewportWidth}
@@ -119,127 +194,21 @@ export default function App() {
         isFailedUploadState={isFailedUploadState}
         onToggleFailedUploadState={() => {
           setIsFailedUploadState(!isFailedUploadState);
-          if (platform === 'web') setWebScreen('upload');
+          if (platform === 'web') router.push('/upload');
         }}
         isLoadingSkeleton={isLoadingSkeleton}
         onToggleLoadingSkeleton={() => setIsLoadingSkeleton(!isLoadingSkeleton)}
         isMobileOffline={isMobileOffline}
         onToggleMobileOffline={() => setIsMobileOffline(!isMobileOffline)}
+        currentRoute={pathname}
       />
 
       {/* Main Content Render */}
       {platform === 'web' ? (
-        <div className="flex-1 flex flex-col">
-          {/* Web Navigation bar (shown on standard pages, omitted on focus modes and auth) */}
-          {webScreen !== 'signin' && webScreen !== 'flashcard' && (
-            <WebNavbar
-              currentScreen={webScreen}
-              onNavigate={(s) => setWebScreen(s)}
-              onNewDeckClick={handleWebNewDeck}
-            />
-          )}
-
-          {/* Viewport Width Constraint Wrapper */}
-          <main
-            className={`flex-1 transition-all ${getViewportContainerClass()}`}
-            style={{
-              backgroundColor: '#F3FAF8',
-              borderColor: '#B8D3D1',
-            }}
-          >
-            {webScreen === 'signin' && (
-              <WebSignIn
-                onSignInSuccess={() => setWebScreen('dashboard')}
-              />
-            )}
-
-            {webScreen === 'dashboard' && (
-              <WebDashboard
-                decks={decks}
-                weakTopics={MOCK_WEAK_TOPICS}
-                isEmptyState={isEmptyState}
-                isLoadingSkeleton={isLoadingSkeleton}
-                onDeckClick={(id) => {
-                  setSelectedDeckId(id);
-                  setWebScreen('deck');
-                }}
-                onStartReview={() => setWebScreen('flashcard')}
-                onTakeQuiz={() => setWebScreen('quiz')}
-                onNewDeckClick={handleWebNewDeck}
-              />
-            )}
-
-            {webScreen === 'upload' && (
-              <WebUpload
-                isFailedUploadState={isFailedUploadState}
-                onRetryUpload={() => setIsFailedUploadState(false)}
-                onGenerateSuccess={handleWebGenerateSuccess}
-                onCancel={() => setWebScreen('dashboard')}
-              />
-            )}
-
-            {webScreen === 'deck' && (
-              <WebDeckPage
-                deck={currentDeck}
-                flashcards={flashcards}
-                onStartReview={() => setWebScreen('flashcard')}
-                onStartQuiz={() => setWebScreen('quiz')}
-                onPracticeProblems={() => setWebScreen('problem')}
-                onCodingProblemClick={() => setWebScreen('coding')}
-              />
-            )}
-
-            {webScreen === 'flashcard' && (
-              <WebFlashcardReview
-                flashcard={flashcards[0]}
-                cardNumber={5}
-                totalCards={12}
-                onClose={() => setWebScreen('deck')}
-                onRate={() => {
-                  // user can click rating buttons
-                }}
-              />
-            )}
-
-            {webScreen === 'quiz' && (
-              <WebQuiz
-                quizItem={MOCK_QUIZ_QUESTION}
-                questionIndex={3}
-                totalQuestions={10}
-                onNextQuestion={() => setWebScreen('quiz-results')}
-                onFinishQuiz={() => setWebScreen('quiz-results')}
-              />
-            )}
-
-            {webScreen === 'quiz-results' && (
-              <WebQuizResults
-                onReviewMissedAsFlashcards={() => setWebScreen('flashcard')}
-                onRetakeQuiz={() => setWebScreen('quiz')}
-                onBackToDeck={() => setWebScreen('deck')}
-              />
-            )}
-
-            {webScreen === 'problem' && (
-              <WebProblemPractice
-                problem={MOCK_PROBLEM}
-                onNextProblem={() => setWebScreen('coding')}
-                onTrySimilar={() => {
-                  // toggle similar
-                }}
-              />
-            )}
-
-            {webScreen === 'coding' && (
-              <WebCodingProblem
-                codingProblem={MOCK_CODING_PROBLEM}
-                onNextProblem={() => setWebScreen('dashboard')}
-                onTrySimilar={() => {
-                  // toggle similar
-                }}
-              />
-            )}
-          </main>
-        </div>
+        /* Next.js RootLayout with current page */
+        <RootLayout webViewportWidth={webViewportWidth}>
+          {renderNextJsPage()}
+        </RootLayout>
       ) : (
         /* Mobile App (390x844 frame feel) */
         <div className="flex-1 flex items-center justify-center bg-[#1A281F]/5 p-2">
@@ -255,8 +224,7 @@ export default function App() {
                 decks={decks}
                 activeTab={mobileTab}
                 onTabChange={handleMobileTabChange}
-                onDeckClick={(id) => {
-                  setSelectedDeckId(id);
+                onDeckClick={() => {
                   setMobileScreen('flashcard-front');
                 }}
                 onStartReview={() => setMobileScreen('flashcard-front')}
@@ -317,5 +285,13 @@ export default function App() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <NextRouterProvider>
+      <AppContent />
+    </NextRouterProvider>
   );
 }

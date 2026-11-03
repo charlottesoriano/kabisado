@@ -62,6 +62,8 @@ def test_rls_on_every_table_with_no_policies(upgrade_sql: str) -> None:
     sql = upgrade_sql.lower()
     for table in TABLES:
         assert f"alter table app.{table} enable row level security" in sql
+    # Alembic's own version table, created by env.py before 0001 (migration 0004).
+    assert "alter table app.alembic_version enable row level security" in sql
     assert "create policy" not in sql
 
 
@@ -99,6 +101,7 @@ def test_downgrade_drops_tables_keeps_extensions_and_schema(
     assert "drop schema app" not in sql
     assert "drop schema if exists app" not in sql
     assert "drop schema if exists procrastinate cascade" in sql
+    assert "alter table app.alembic_version disable row level security" in sql
     # Dependents are dropped before what they reference.
     assert sql.index("drop table app.attempt_answers") < sql.index(
         "drop table app.problem_instances"

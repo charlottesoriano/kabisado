@@ -55,7 +55,7 @@ def test_all_tables_have_rls_and_no_policies(engine: Engine) -> None:
                 text(
                     "select c.relname, c.relrowsecurity from pg_class c "
                     "join pg_namespace n on n.oid = c.relnamespace "
-                    "where n.nspname = :s and c.relkind = 'r' and c.relname <> 'alembic_version'"
+                    "where n.nspname = :s and c.relkind = 'r'"
                 ),
                 {"s": SCHEMA},
             ).all()
@@ -63,7 +63,8 @@ def test_all_tables_have_rls_and_no_policies(engine: Engine) -> None:
         policies = conn.execute(
             text("select count(*) from pg_policies where schemaname = :s"), {"s": SCHEMA}
         ).scalar_one()
-    assert rls == dict.fromkeys(TABLES, True)
+    # alembic_version too (migration 0004).
+    assert rls == dict.fromkeys((*TABLES, "alembic_version"), True)
     assert policies == 0
 
 

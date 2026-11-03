@@ -1,6 +1,6 @@
 import React from 'react';
 import { PlatformMode, WebScreen, MobileScreen } from '../../types';
-import { Monitor, Smartphone, Layers, AlertCircle, WifiOff, Sparkles, FolderX } from 'lucide-react';
+import { Monitor, Smartphone, Layers, AlertCircle, WifiOff, Sparkles, FolderX, Compass } from 'lucide-react';
 
 interface PlatformSwitcherProps {
   platform: PlatformMode;
@@ -20,6 +20,7 @@ interface PlatformSwitcherProps {
   onToggleLoadingSkeleton: () => void;
   isMobileOffline: boolean;
   onToggleMobileOffline: () => void;
+  currentRoute?: string;
 }
 
 export const PlatformSwitcher: React.FC<PlatformSwitcherProps> = ({
@@ -39,17 +40,18 @@ export const PlatformSwitcher: React.FC<PlatformSwitcherProps> = ({
   onToggleLoadingSkeleton,
   isMobileOffline,
   onToggleMobileOffline,
+  currentRoute = '/dashboard',
 }) => {
-  const webScreensList: { id: WebScreen; label: string }[] = [
-    { id: 'dashboard', label: '2. Dashboard' },
-    { id: 'deck', label: '4. Deck page (Bio 101)' },
-    { id: 'flashcard', label: '5. Flashcard review' },
-    { id: 'quiz', label: '6. Quiz (answered)' },
-    { id: 'quiz-results', label: '7. Quiz results' },
-    { id: 'problem', label: '8. Problem practice' },
-    { id: 'coding', label: '9. Coding problem' },
-    { id: 'upload', label: '3. Upload notes/PDF' },
-    { id: 'signin', label: '1. Sign in (Clerk)' },
+  const webScreensList: { id: WebScreen; label: string; nextRoute: string }[] = [
+    { id: 'dashboard', label: 'Dashboard', nextRoute: '/dashboard' },
+    { id: 'deck', label: 'Deck Page', nextRoute: '/decks/deck-1' },
+    { id: 'flashcard', label: 'Review (Focus)', nextRoute: '/review/deck-1' },
+    { id: 'quiz', label: 'Quiz (Answered)', nextRoute: '/quiz/deck-1' },
+    { id: 'quiz-results', label: 'Quiz Results', nextRoute: '/quiz/deck-1/results' },
+    { id: 'problem', label: 'STEM Problem', nextRoute: '/problems/prob-101' },
+    { id: 'coding', label: 'Python Problem', nextRoute: '/coding/code-101' },
+    { id: 'upload', label: 'Upload Notes/PDF', nextRoute: '/upload' },
+    { id: 'signin', label: 'Sign In (Clerk)', nextRoute: '/sign-in' },
   ];
 
   const mobileScreensList: { id: MobileScreen; label: string }[] = [
@@ -64,15 +66,15 @@ export const PlatformSwitcher: React.FC<PlatformSwitcherProps> = ({
 
   return (
     <div
-      className="sticky top-0 z-50 w-full border-b backdrop-blur-md px-4 py-2.5 transition-colors select-none"
+      className="sticky top-0 z-50 w-full border-b backdrop-blur-md px-4 py-2 transition-colors select-none"
       style={{
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        backgroundColor: 'rgba(255, 255, 255, 0.96)',
         borderColor: '#B8D3D1',
       }}
     >
       <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-        {/* Left: Platform Toggle */}
-        <div className="flex items-center gap-2">
+        {/* Left: Platform Toggle & Next.js Route Tag */}
+        <div className="flex items-center gap-2.5">
           <div
             className="flex items-center p-1 rounded-xl border"
             style={{ backgroundColor: '#F3FAF8', borderColor: '#B8D3D1' }}
@@ -87,7 +89,7 @@ export const PlatformSwitcher: React.FC<PlatformSwitcherProps> = ({
               }`}
             >
               <Monitor className="w-3.5 h-3.5" strokeWidth={2} />
-              <span>Responsive Web (1280px)</span>
+              <span>Next.js Web (1280px)</span>
             </button>
             <button
               type="button"
@@ -106,13 +108,13 @@ export const PlatformSwitcher: React.FC<PlatformSwitcherProps> = ({
           {/* Web Viewport Presets if Web */}
           {platform === 'web' && (
             <div className="hidden sm:flex items-center gap-1 text-xs">
-              <span className="text-[#635255] font-medium mr-1">Width:</span>
+              <span className="text-[#635255] font-medium mr-0.5">Width:</span>
               {(['full', '1280', '768', '375'] as const).map((width) => (
                 <button
                   key={width}
                   type="button"
                   onClick={() => onWebViewportWidthChange(width)}
-                  className={`px-2 py-1 rounded-md font-mono text-[11px] transition-colors cursor-pointer border ${
+                  className={`px-2 py-0.5 rounded-md font-mono text-[11px] transition-colors cursor-pointer border ${
                     webViewportWidth === width
                       ? 'bg-[#A7E8BD] text-[#1A281F] border-[#1A281F] font-semibold'
                       : 'bg-white text-[#635255] border-[#B8D3D1] hover:bg-[#F3FAF8]'
@@ -125,37 +127,50 @@ export const PlatformSwitcher: React.FC<PlatformSwitcherProps> = ({
           )}
         </div>
 
-        {/* Center: Screen Jumper */}
+        {/* Center: Next.js Route Display & Screen Jumper */}
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-[#635255] flex items-center gap-1">
-            <Layers className="w-3.5 h-3.5" strokeWidth={2} />
-            <span>Screen:</span>
-          </span>
-          {platform === 'web' ? (
-            <select
-              value={webScreen}
-              onChange={(e) => onWebScreenChange(e.target.value as WebScreen)}
-              className="text-xs font-medium px-2.5 py-1.5 rounded-lg border bg-white text-[#1A281F] border-[#B8D3D1] focus:outline-none focus:border-[#1A281F] cursor-pointer"
+          {platform === 'web' && (
+            <div
+              className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono select-none"
+              style={{ backgroundColor: '#F3FAF8', borderColor: '#B8D3D1', color: '#1A281F' }}
             >
-              {webScreensList.map((screen) => (
-                <option key={screen.id} value={screen.id}>
-                  {screen.label}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <select
-              value={mobileScreen}
-              onChange={(e) => onMobileScreenChange(e.target.value as MobileScreen)}
-              className="text-xs font-medium px-2.5 py-1.5 rounded-lg border bg-white text-[#1A281F] border-[#B8D3D1] focus:outline-none focus:border-[#1A281F] cursor-pointer"
-            >
-              {mobileScreensList.map((screen) => (
-                <option key={screen.id} value={screen.id}>
-                  {screen.label}
-                </option>
-              ))}
-            </select>
+              <Compass className="w-3.5 h-3.5 text-[#1A281F]" strokeWidth={2} />
+              <span className="text-[#635255]">Next.js Route:</span>
+              <strong className="font-semibold text-[#1A281F]">{currentRoute}</strong>
+            </div>
           )}
+
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-semibold text-[#635255] flex items-center gap-1">
+              <Layers className="w-3.5 h-3.5" strokeWidth={2} />
+              <span>Page:</span>
+            </span>
+            {platform === 'web' ? (
+              <select
+                value={webScreen}
+                onChange={(e) => onWebScreenChange(e.target.value as WebScreen)}
+                className="text-xs font-medium px-2.5 py-1.5 rounded-lg border bg-white text-[#1A281F] border-[#B8D3D1] focus:outline-none focus:border-[#1A281F] cursor-pointer"
+              >
+                {webScreensList.map((screen) => (
+                  <option key={screen.id} value={screen.id}>
+                    {screen.nextRoute} ({screen.label})
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <select
+                value={mobileScreen}
+                onChange={(e) => onMobileScreenChange(e.target.value as MobileScreen)}
+                className="text-xs font-medium px-2.5 py-1.5 rounded-lg border bg-white text-[#1A281F] border-[#B8D3D1] focus:outline-none focus:border-[#1A281F] cursor-pointer"
+              >
+                {mobileScreensList.map((screen) => (
+                  <option key={screen.id} value={screen.id}>
+                    {screen.label}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
         </div>
 
         {/* Right: States Simulation Toggles */}

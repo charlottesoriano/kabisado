@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /review/
+
+Sitemap: https://kabisado.ph/sitemap.xml
